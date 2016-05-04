@@ -1,23 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// TODO return array of current snake node positions
+// TODO print board (whatever isnt snake or food is empty..)
 
 typedef struct Point {
   int x;
   int y;
 } Point;
 
+typedef struct Food { Point pos; } Food;
+
 typedef struct Node {
   struct Node *next;
   Point value;
 } Node;
 
-typedef enum Direction {
-  UP,
-  DOWN,
-  LEFT,
-  RIGHT
-} Direction;
+typedef enum Direction { UP, DOWN, LEFT, RIGHT } Direction;
 
 typedef struct Snake {
   Direction direction;
@@ -28,6 +27,15 @@ typedef struct Snake {
 int is_same_point(Point a, Point b) {
   if (a.x == b.x && a.y == b.y) {
     return 1;
+  }
+  return 0;
+}
+
+int is_snake_collision(Snake *snake, Point pos) {
+  while (snake->head) {
+    if (is_same_point(snake->head->value, pos)) {
+      return 1;
+    }
   }
   return 0;
 }
@@ -63,7 +71,6 @@ void remove_link(Node **head, Point value_to_remove) {
   return;
 }
 
-
 void display_list(Node *head) {
   Node *current_node = head;
   while (current_node) {
@@ -73,11 +80,29 @@ void display_list(Node *head) {
   printf("NULL\n");
 }
 
+void update_food(Food *food, Snake *snake) {
+  Point p = {rand() % 10, rand() % 10};
+  while (is_snake_collision(snake, p) || is_same_point(p, food->pos)) {
+    p.x = rand() % 10;
+    p.y = rand() % 10;
+  }
+  food->pos = p;
+}
+
+Food *init_food(Snake *snake) {
+  Food *food = (Food *)malloc(sizeof(food));
+  // we give a starting point despite calling update_food() right after
+  // update_food has a condition to ensure we don't spawn in the same location
+  Point p = { 0,0 };
+  food->pos = p;
+  update_food(food, snake);
+  return food;
+}
+
 Snake *init_snake() {
   Node *head = NULL;
-  Point p = { 0,0 };
+  Point p = {0, 0};
   add_front(&head, p);
-  // Snake snake = { 'r', 1, head };
   Snake *snake = (Snake *)malloc(sizeof(Snake));
   snake->direction = RIGHT;
   snake->size = 1;
@@ -85,7 +110,7 @@ Snake *init_snake() {
   return snake;
 }
 
-void update_snake(Snake *snake) {
+void update_snake(Snake *snake, Food *food) {
   Point pos = snake->head->value;
   switch (snake->direction) {
   case UP:
@@ -102,11 +127,19 @@ void update_snake(Snake *snake) {
   if (pos.x < 0 || pos.y < 0) {
     // global variable indicating death?
   }
-
   if (is_snake_collision(snake, pos)) {
-    //death
+    // death
   }
- 
+  // eat
+  if (is_same_point(pos, food->pos)) {
+    // TODO increase score 
+
+    // update_food has logic to ensure it doesn't respawn in same loc.
+    // by calling it first we remove chance of appending head of snake on top of
+    // a food position
+    update_food(food, snake);
+    add_front(snake->head, pos);
+  }
 }
 
 void remove_duplicates(Node **head) {
@@ -125,13 +158,15 @@ void remove_duplicates(Node **head) {
   return;
 }
 
-int is_snake_collision(Snake *snake, Point pos) {
-  while (snake->head) {
-    if (is_same_point(snake->head->value, pos)) {
-      return 1;
+// TOOD pretty
+void print_board(Snake *snake, Food *food) {
+  int i = 0;
+  int j = 0;
+  for (i; i < 10; i++) {
+    for (j; j < 10; j++) {
+      Point p = { i,j };
     }
   }
-  return 0;
 }
 
 int main(int argc, char const *argv[]) {
@@ -140,9 +175,9 @@ int main(int argc, char const *argv[]) {
 
   int i;
   for (i = 0; i <= 10; i++) {
-    Point p = { i, i };
+    Point p = {i, i};
     add_front(snake->head, p);
   }
-  Point q = { 10, 10 };
+  Point q = {10, 10};
   return 0;
 }
