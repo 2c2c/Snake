@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "list.h"
 
 // 5 rows
 // 8 cols
@@ -10,18 +11,11 @@
 // out of game vs ingame
 #define LIVE 0
 
-typedef struct Point {
-  int x;
-  int y;
-} Point;
 
 typedef struct Food { Point pos; } Food;
 
-typedef struct Node {
-  struct Node *next;
-  Point value;
-} Node;
 
+// setting the enum values to respective chars makes testing with stdin simple
 typedef enum Direction {
   UP = 'u',
   DOWN = 'd',
@@ -35,12 +29,6 @@ typedef struct Snake {
   Node *head;
 } Snake;
 
-int is_same_point(Point a, Point b) {
-  if (a.x == b.x && a.y == b.y) {
-    return 1;
-  }
-  return 0;
-}
 
 int is_snake_collision(Snake *snake, Point pos) {
   Node *current = snake->head;
@@ -54,18 +42,6 @@ int is_snake_collision(Snake *snake, Point pos) {
   return 0;
 }
 
-void add_front(Node **head, Point value) {
-  Node *new_node = (Node *)malloc(sizeof(Node));
-  new_node->value = value;
-  if (!(*head)) {
-    new_node->next = NULL;
-    (*head) = new_node;
-  } else {
-    new_node->next = (*head);
-    (*head) = new_node;
-  }
-  return;
-}
 
 // add node to internal list, increment snake size count
 void grow_snake(Snake *snake, Point pos) {
@@ -73,37 +49,13 @@ void grow_snake(Snake *snake, Point pos) {
   snake->size++;
 }
 
-void remove_link(Node **head, Point value_to_remove) {
-  Node *temp_node = NULL;
-  Node *current_node = (*head);
-  if (is_same_point((*head)->value, value_to_remove)) {
-    (*head) = (*head)->next;
-  } else {
-    while (current_node) {
-      if (is_same_point(current_node->value, value_to_remove)) {
-        temp_node = current_node->next;
-        current_node->next = NULL;
-        current_node = temp_node;
-      }
-      current_node = current_node->next;
-    }
-  }
-  return;
-}
 
-void display_list(Node *head) {
-  Node *current_node = head;
-  while (current_node) {
-    printf("(%d, %d) ->", current_node->value.x, current_node->value.y);
-    current_node = current_node->next;
-  }
-  printf("NULL\n");
-}
 
 void update_food(Food *food, Snake *snake) {
   Point p = {rand() % X_MAX, rand() % Y_MAX};
 
-  // a better implementation might be needed if there's performance issues when the board is filled up with snake positions
+  // a better implementation might be needed if there's performance issues when
+  // the board is filled up with snake positions
   while (is_snake_collision(snake, p) || is_same_point(p, food->pos)) {
     p.x = rand() % X_MAX;
     p.y = rand() % Y_MAX;
@@ -132,7 +84,8 @@ Snake *init_snake() {
   return snake;
 }
 
-// update direction on snake. if direction is opposite current direction, dont do anything.
+// update direction on snake. if direction is opposite current direction, dont
+// do anything.
 void change_direction(Snake *snake, Direction new_dir) {
   switch (snake->direction) {
   case UP:
@@ -176,6 +129,8 @@ void update_snake(Snake *snake, Food *food) {
     break;
   case RIGHT:
     pos.x++;
+    break;
+  default:
     break;
   }
 
