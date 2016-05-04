@@ -1,3 +1,5 @@
+#ifndef LIST_H
+#define LIST_H
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,3 +17,4 @@ int is_same_point(Point a, Point b);
 void add_front(Node **head, Point value);
 void display_list(Node *head);
 void remove_link(Node **head, Point value_to_remove);
+#endif LIST_H
