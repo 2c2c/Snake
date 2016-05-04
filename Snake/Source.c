@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
-// TODO return array of current snake node positions
-// TODO print board (whatever isnt snake or food is empty..)
+// 5 rows
+// 8 cols
+#define X_MAX 8
+#define Y_MAX 5
 
 typedef struct Point {
   int x;
@@ -56,6 +59,12 @@ void add_front(Node **head, Point value) {
   return;
 }
 
+// add node to internal list, increment snake size count
+void grow_snake(Snake *snake, Point pos) {
+  add_front(&snake->head, pos);
+  snake->size++;
+}
+
 void remove_link(Node **head, Point value_to_remove) {
   Node *temp_node = NULL;
   Node *current_node = (*head);
@@ -84,10 +93,11 @@ void display_list(Node *head) {
 }
 
 void update_food(Food *food, Snake *snake) {
-  Point p = {rand() % 10, rand() % 10};
+  Point p = {rand() % X_MAX, rand() % Y_MAX};
+  
   while (is_snake_collision(snake, p) || is_same_point(p, food->pos)) {
-    p.x = rand() % 10;
-    p.y = rand() % 10;
+    p.x = rand() % X_MAX;
+    p.y = rand() % Y_MAX;
   }
   food->pos = p;
 }
@@ -141,7 +151,7 @@ void update_snake(Snake *snake, Food *food) {
     // by calling it first we remove chance of appending head of snake on top of
     // a food position
     update_food(food, snake);
-    add_front(snake->head, pos);
+    grow_snake(snake, pos);
   }
 }
 
@@ -180,9 +190,9 @@ void print_board(Snake *snake, Food *food) {
   Point *snake_pos = snake_positions(snake);
   int i = 0;
   int j = 0;
-  for (i; i < 10; i++) {
-    for (j; j < 10; j++) {
-      Point p = {i, j};
+  for (i; i < Y_MAX; i++) {
+    for (j; j < X_MAX; j++) {
+      Point p = {j, i};
       if (is_snake_collision(snake, p)) {
         printf("S");
       } else if (is_same_point(food->pos, p)) {
@@ -196,14 +206,9 @@ void print_board(Snake *snake, Food *food) {
   }
 }
 
-// add node to internal list, increment snake size count
-void grow_snake(Snake *snake, Point pos) {
-  add_front(&snake->head, pos);
-  snake->size++;
-}
 
 int main(int argc, char const *argv[]) {
-  Node *head = NULL;
+  srand((unsigned int) time(NULL));
   Snake *snake = init_snake();
   Food *food = init_food(snake);
 
