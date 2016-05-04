@@ -32,9 +32,12 @@ int is_same_point(Point a, Point b) {
 }
 
 int is_snake_collision(Snake *snake, Point pos) {
-  while (snake->head) {
-    if (is_same_point(snake->head->value, pos)) {
+  Node *current = snake->head;
+  while (current) {
+    if (is_same_point(current->value, pos)) {
       return 1;
+    } else {
+      current = current->next;
     }
   }
   return 0;
@@ -93,7 +96,7 @@ Food *init_food(Snake *snake) {
   Food *food = (Food *)malloc(sizeof(food));
   // we give a starting point despite calling update_food() right after
   // update_food has a condition to ensure we don't spawn in the same location
-  Point p = { 0,0 };
+  Point p = {0, 0};
   food->pos = p;
   update_food(food, snake);
   return food;
@@ -132,7 +135,7 @@ void update_snake(Snake *snake, Food *food) {
   }
   // eat
   if (is_same_point(pos, food->pos)) {
-    // TODO increase score 
+    // TODO increase score
 
     // update_food has logic to ensure it doesn't respawn in same loc.
     // by calling it first we remove chance of appending head of snake on top of
@@ -158,26 +161,60 @@ void remove_duplicates(Node **head) {
   return;
 }
 
+// array of coordinates snake occupies. Must Free
+Point *snake_positions(Snake *snake) {
+  Point *positions = (Point *)malloc(sizeof(Point) * snake->size);
+
+  int i = 0;
+  Node *current = snake->head;
+  while (current) {
+    positions[i] = current->value;
+    current = current->next;
+    i++;
+  }
+  return positions;
+}
+
 // TOOD pretty
 void print_board(Snake *snake, Food *food) {
+  Point *snake_pos = snake_positions(snake);
   int i = 0;
   int j = 0;
   for (i; i < 10; i++) {
     for (j; j < 10; j++) {
-      Point p = { i,j };
+      Point p = {i, j};
+      if (is_snake_collision(snake, p)) {
+        printf("S");
+      } else if (is_same_point(food->pos, p)) {
+        printf("F");
+      } else {
+        printf("x");
+      }
     }
+    printf("\n");
+    j = 0;
   }
+}
+
+// add node to internal list, increment snake size count
+void grow_snake(Snake *snake, Point pos) {
+  add_front(&snake->head, pos);
+  snake->size++;
 }
 
 int main(int argc, char const *argv[]) {
   Node *head = NULL;
   Snake *snake = init_snake();
+  Food *food = init_food(snake);
 
   int i;
-  for (i = 0; i <= 10; i++) {
+  for (i = 0; i < 10; i++) {
     Point p = {i, i};
-    add_front(snake->head, p);
+    grow_snake(snake, p);
   }
-  Point q = {10, 10};
+  Point *positions = snake_positions(snake);
+  print_board(snake, food);
+
+  // Point q = {10, 10};
   return 0;
 }
