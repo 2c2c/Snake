@@ -7,6 +7,9 @@
 #define X_MAX 8
 #define Y_MAX 5
 
+// out of game vs ingame
+#define LIVE 0
+
 typedef struct Point {
   int x;
   int y;
@@ -19,7 +22,12 @@ typedef struct Node {
   Point value;
 } Node;
 
-typedef enum Direction { UP, DOWN, LEFT, RIGHT } Direction;
+typedef enum Direction {
+  UP = 'u',
+  DOWN = 'd',
+  LEFT = 'l',
+  RIGHT = 'r'
+} Direction;
 
 typedef struct Snake {
   Direction direction;
@@ -94,7 +102,8 @@ void display_list(Node *head) {
 
 void update_food(Food *food, Snake *snake) {
   Point p = {rand() % X_MAX, rand() % Y_MAX};
-  
+
+  // a better implementation might be needed if there's performance issues when the board is filled up with snake positions
   while (is_snake_collision(snake, p) || is_same_point(p, food->pos)) {
     p.x = rand() % X_MAX;
     p.y = rand() % Y_MAX;
@@ -123,28 +132,61 @@ Snake *init_snake() {
   return snake;
 }
 
+// update direction on snake. if direction is opposite current direction, dont do anything.
+void change_direction(Snake *snake, Direction new_dir) {
+  switch (snake->direction) {
+  case UP:
+    if (new_dir == DOWN) {
+      break;
+    }
+    snake->direction = new_dir;
+    break;
+  case DOWN:
+    if (new_dir == UP) {
+      break;
+    }
+    snake->direction = new_dir;
+    break;
+  case LEFT:
+    if (new_dir == RIGHT) {
+      break;
+    }
+    snake->direction = new_dir;
+  case RIGHT:
+    if (new_dir == LEFT) {
+      break;
+    }
+    snake->direction = new_dir;
+    break;
+  }
+}
+
+// remember: matrix based coordinate system
 void update_snake(Snake *snake, Food *food) {
   Point pos = snake->head->value;
   switch (snake->direction) {
   case UP:
-    pos.y++;
-  case DOWN:
     pos.y--;
+    break;
+  case DOWN:
+    pos.y++;
+    break;
   case LEFT:
     pos.x--;
+    break;
   case RIGHT:
     pos.x++;
+    break;
   }
 
   // out of bounds TODO upper limit
-  if (pos.x < 0 || pos.y < 0) {
+  if (pos.x < 0 || pos.y < 0 || pos.x > X_MAX || pos.y > Y_MAX) {
     // global variable indicating death?
-  }
-  if (is_snake_collision(snake, pos)) {
+  } else if (is_snake_collision(snake, pos)) {
     // death
   }
   // eat
-  if (is_same_point(pos, food->pos)) {
+  else if (is_same_point(pos, food->pos)) {
     // TODO increase score
 
     // update_food has logic to ensure it doesn't respawn in same loc.
@@ -153,22 +195,19 @@ void update_snake(Snake *snake, Food *food) {
     update_food(food, snake);
     grow_snake(snake, pos);
   }
-}
-
-void remove_duplicates(Node **head) {
-  Node *current_node = (*head);
-  Node *previous_node = NULL;
-
-  while (current_node->next) {
-    previous_node = current_node;
-    current_node = current_node->next;
-    if (is_same_point(previous_node->value, current_node->value)) {
-      previous_node->next = current_node->next;
-      current_node->next = NULL;
-      current_node = previous_node;
+  // move snake: head takes new point position and the body 'follows' by taking
+  // the previous nodes point
+  else {
+    Point new_pos = pos;
+    Point temp;
+    Node *current = snake->head;
+    while (current) {
+      temp = current->value;
+      current->value = new_pos;
+      new_pos = temp;
+      current = current->next;
     }
   }
-  return;
 }
 
 // array of coordinates snake occupies. Must Free
@@ -206,19 +245,18 @@ void print_board(Snake *snake, Food *food) {
   }
 }
 
-
 int main(int argc, char const *argv[]) {
-  srand((unsigned int) time(NULL));
+  srand((unsigned int)time(NULL));
   Snake *snake = init_snake();
   Food *food = init_food(snake);
 
-  int i;
-  for (i = 0; i < 10; i++) {
-    Point p = {i, i};
-    grow_snake(snake, p);
+  char c;
+  while (1) {
+    print_board(snake, food);
+    scanf_s(" %c", &c);
+    change_direction(snake, c);
+    update_snake(snake, food);
   }
-  Point *positions = snake_positions(snake);
-  print_board(snake, food);
 
   // Point q = {10, 10};
   return 0;
