@@ -1,5 +1,15 @@
 #include "snake.h"
 
+void clear() {
+#if defined(__linux__) || defined(__unix__) || defined(__APPLE__)
+  system("clear");
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+  system("cls");
+#endif
+}
+
 int is_snake_collision(Snake *snake, Point pos) {
   Node *current = snake->head;
   while (current) {
@@ -48,6 +58,7 @@ Snake *init_snake() {
   snake->direction = RIGHT;
   snake->size = 1;
   snake->head = head;
+  snake->alive = 1;
   return snake;
 }
 
@@ -78,6 +89,8 @@ void change_direction(Snake *snake, Direction new_dir) {
     }
     snake->direction = new_dir;
     break;
+  default:
+    break;
   }
 }
 
@@ -103,9 +116,9 @@ void update_snake(Snake *snake, Food *food) {
 
   // losing conditions
   if (pos.x < 0 || pos.y < 0 || pos.x > X_MAX || pos.y > Y_MAX) {
-    // g_live = 0;
+    snake->alive = 0;
   } else if (is_snake_collision(snake, pos)) {
-    // g_live = 0;
+    snake->alive = 0;
   }
   // eating food condition
   else if (is_same_point(pos, food->pos)) {
@@ -115,7 +128,8 @@ void update_snake(Snake *snake, Food *food) {
     update_food(food, snake);
     grow_snake(snake, pos);
   }
-  // move snake condition: head takes new point position and the body 'follows' by taking
+  // move snake condition: head takes new point position and the body 'follows'
+  // by taking
   // the previous nodes point
   else {
     Point new_pos = pos;
@@ -146,6 +160,7 @@ Point *snake_positions(Snake *snake) {
 
 // TOOD pretty
 void print_board(Snake *snake, Food *food) {
+  clear();
   Point *snake_pos = snake_positions(snake);
   int i = 0;
   int j = 0;
@@ -153,7 +168,11 @@ void print_board(Snake *snake, Food *food) {
     for (j; j < X_MAX; j++) {
       Point p = {j, i};
       if (is_snake_collision(snake, p)) {
-        printf("S");
+        if (snake->alive) {
+          printf("S");
+        } else {
+          printf("X");
+        }
       } else if (is_same_point(food->pos, p)) {
         printf("F");
       } else {
@@ -162,5 +181,10 @@ void print_board(Snake *snake, Food *food) {
     }
     printf("\n");
     j = 0;
+  }
+  if (snake->alive) {
+    printf("wasd input \n");
+  } else {
+    printf("ya lost buddy \n");
   }
 }
